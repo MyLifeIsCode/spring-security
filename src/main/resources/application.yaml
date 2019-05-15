@@ -8,5 +8,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+
+#  security:
+#    user:
+#      name: admin
+#      password: 123456
 server:
   port: 18900
+
