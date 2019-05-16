@@ -1,5 +1,8 @@
 package com.myself.security.config;
 
+import com.myself.security.filter.AfterLoginFilter;
+import com.myself.security.filter.AtLoginFilter;
+import com.myself.security.filter.BeforeLoginFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 //@Configuration：注解这是一个配置类。
 //@EnableWebSecurity：注解开启Spring Security的功能。
@@ -47,6 +51,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().authenticated()//任何请求，登陆后可以访问
                 .and()
                 .formLogin().loginPage("/login")
+                .and()
+                .addFilterBefore(new BeforeLoginFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new AfterLoginFilter(),UsernamePasswordAuthenticationFilter.class)
+                .addFilterAt(new AtLoginFilter(),UsernamePasswordAuthenticationFilter.class)
                 ;
 //        super.configure(http);
     }
