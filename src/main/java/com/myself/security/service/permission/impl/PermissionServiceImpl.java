@@ -1,5 +1,6 @@
 package com.myself.security.service.permission.impl;
 
+import com.google.common.collect.Maps;
 import com.myself.security.domain.permission.Permission;
 import com.myself.security.domain.role.Role;
 import com.myself.security.repository.permission.PermissionRepository;
@@ -10,6 +11,7 @@ import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.access.SecurityConfig;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.*;
 
 @Service
@@ -19,8 +21,9 @@ public class PermissionServiceImpl implements IPermissionService {
     @Autowired
     private PermissionRepository permissionRepository;
 
-    private Map<String,Collection<ConfigAttribute>> permissionMap = null;
+    private Map<String,Collection<ConfigAttribute>> permissionMap = Maps.newHashMap();
 
+    @PostConstruct
     public void initPermisions(){
         log.info("PermissionServiceImpl.initPermissions()");
         permissionMap = new HashMap<>();
@@ -36,7 +39,7 @@ public class PermissionServiceImpl implements IPermissionService {
             }
             permissionMap.put(permission.getUrl(),collection);
         }
-        log.info(permissionMap + "");
+        log.info(permissionMap.toString() + "===========");
     }
     @Override
     public Map<String, Collection<ConfigAttribute>> getPermissionMap() {

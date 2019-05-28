@@ -1,11 +1,10 @@
 package com.myself.security.config;
 
-import com.myself.security.filter.AfterLoginFilter;
-import com.myself.security.filter.AtLoginFilter;
-import com.myself.security.filter.BeforeLoginFilter;
+import com.myself.security.filter.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,6 +12,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
+import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 //@Configuration：注解这是一个配置类。
@@ -52,13 +53,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/test/**","/test1/**").permitAll()//test,test1下所有都可以访问
                 .antMatchers("/res/**/*.{js,html}").permitAll()//比如要把/res/的所有.js,html设置为白名单：
                 .antMatchers("/haha/**").access("hasRole('admin')")
+                .withObjectPostProcessor(new MyObjectPostProcessor())
                 .anyRequest().authenticated()//任何请求，登陆后可以访问
+//                .anyRequest().access("@authService.canAccess(request,authentication)")
                 .and()
                 .formLogin().loginPage("/login")
                 .and()
-                .addFilterBefore(new BeforeLoginFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(new AfterLoginFilter(),UsernamePasswordAuthenticationFilter.class)
-                .addFilterAt(new AtLoginFilter(),UsernamePasswordAuthenticationFilter.class)
+//                .addFilterBefore(new BeforeLoginFilter(), UsernamePasswordAuthenticationFilter.class)
+//                .addFilterAfter(new AfterLoginFilter(),UsernamePasswordAuthenticationFilter.class)
+//                .addFilterAt(new AtLoginFilter(),UsernamePasswordAuthenticationFilter.class)
                 ;
 //        super.configure(http);
     }
@@ -68,4 +71,42 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return new BCryptPasswordEncoder();
     }
 
+    @Bean
+    public FilterInvocationSecurityMetadataSource filterInvocationSecurityMetadataSource(){
+        return new MyFilterInvocationSecurityMetadataSource();
+    }
+    @Bean
+    public MyAccessDecisionManager accessDecisionManager(){
+        return new MyAccessDecisionManager();
+    }
+    private class MyObjectPostProcessor implements ObjectPostProcessor<FilterSecurityInterceptor>{
+
+        @Override
+        public <O extends FilterSecurityInterceptor> O postProcess(O fsi) {
+            fsi.setSecurityMetadataSource(filterInvocationSecurityMetadataSource());
+            fsi.setAccessDecisionManager(accessDecisionManager());
+            return fsi;
+        }
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

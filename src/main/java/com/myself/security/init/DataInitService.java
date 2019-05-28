@@ -49,7 +49,7 @@ public class DataInitService {
         admin.setUserName("admin");
         admin.setPassword(passwordEncoder.encode("123"));
         admin.setRoles(roles);
-//        userInfoRepository.save(admin);
+        userInfoRepository.save(admin);
 
 
         roles = new ArrayList<>();
@@ -59,7 +59,7 @@ public class DataInitService {
         user.setUserName("user");
         user.setPassword(passwordEncoder.encode("123"));
         user.setRoles(roles);
-//        userInfoRepository.save(user);
+        userInfoRepository.save(user);
 
 
         Permission permission1 = new Permission();
