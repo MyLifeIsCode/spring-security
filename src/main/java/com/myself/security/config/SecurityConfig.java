@@ -51,6 +51,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/","/index").permitAll()//设置所有人可以访问登录页面
                 .antMatchers("/test/**","/test1/**").permitAll()//test,test1下所有都可以访问
                 .antMatchers("/res/**/*.{js,html}").permitAll()//比如要把/res/的所有.js,html设置为白名单：
+                .antMatchers("/haha/**").access("hasRole('admin')")
                 .anyRequest().authenticated()//任何请求，登陆后可以访问
                 .and()
                 .formLogin().loginPage("/login")

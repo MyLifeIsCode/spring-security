@@ -27,4 +27,16 @@ public class LoginController {
         }
         return "/index";
     }
+    @GetMapping("/haha")
+    public String haha(Model model){
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if(principal.equals("anonymousUser")){
+            model.addAttribute("name","anonymous");
+        }else {
+            User user = (User)principal;
+            model.addAttribute("name",user.getUsername());
+        }
+        return "/index";
+    }
+
 }
