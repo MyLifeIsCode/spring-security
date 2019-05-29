@@ -1,11 +1,12 @@
 package com.myself.security.config;
 
-import com.myself.security.filter.*;
+import com.myself.security.filter.MyAccessDecisionManager;
+import com.myself.security.filter.MyFilterInvocationSecurityMetadataSource;
+import com.myself.security.service.userinfo.impl.CustomUserDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -14,7 +15,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.RememberMeServices;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
+import org.springframework.security.web.authentication.rememberme.TokenBasedRememberMeServices;
+
+import javax.sql.DataSource;
 
 //@Configuration：注解这是一个配置类。
 //@EnableWebSecurity：注解开启Spring Security的功能。
@@ -30,7 +36,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true,securedEnabled = true,jsr250Enabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    /** 用来防止token被修改的key */
+    private String rememberMeKey = "wuqian2019";
 
+    @Autowired
+    private CustomUserDetailService customUserDetailService;
+
+    @Autowired
+    private DataSource dataSource;
     /*@Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         //配置从内存加载认证信息
@@ -58,7 +71,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 //                .anyRequest().access("@authService.canAccess(request,authentication)")
                 .and()
                 .formLogin().loginPage("/login")
-                .and()
+                //默认就是1209600秒，即2周
+//                .and().rememberMe().key(rememberMeKey).rememberMeServices(rememberMeServices())
+                .and().rememberMe().tokenRepository(tokenRepository()).tokenValiditySeconds(1209600).userDetailsService(customUserDetailService)
+//                .and()
 //                .addFilterBefore(new BeforeLoginFilter(), UsernamePasswordAuthenticationFilter.class)
 //                .addFilterAfter(new AfterLoginFilter(),UsernamePasswordAuthenticationFilter.class)
 //                .addFilterAt(new AtLoginFilter(),UsernamePasswordAuthenticationFilter.class)
@@ -87,6 +103,29 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             fsi.setAccessDecisionManager(accessDecisionManager());
             return fsi;
         }
+    }
+
+    @Bean
+    public RememberMeServices rememberMeServices() {
+        System.out.println("WebSecurityConfig.tokenBasedRememberMeServices()="+customUserDetailService);
+        TokenBasedRememberMeServices tbrms = new TokenBasedRememberMeServices(rememberMeKey, customUserDetailService);
+        // [可选]需要配置cookie的过期时间，默认过时时间1209600秒，即2个星期。这里设置cookie过期时间为1天
+        tbrms.setTokenValiditySeconds(60 * 60 * 24 * 1);
+
+        // 设置checkbox的参数名为rememberMe（默认为remember-me），
+        //注意如果是ajax请求，参数名不是checkbox的name而是在ajax的data里
+        //tbrms.setParameter("rememberMe");
+        return tbrms;
+    }
+
+    // tokenRepository（）的实现代码如下：
+    @Bean
+    public PersistentTokenRepository tokenRepository(){
+        JdbcTokenRepositoryImpl jdbcTokenRepositoryImpl =new JdbcTokenRepositoryImpl();
+        jdbcTokenRepositoryImpl.setDataSource(dataSource);
+        //自动创建数据库表:persistent_logins，使用一次后注释掉，不然会报错
+//        jdbcTokenRepositoryImpl.setCreateTableOnStartup(true);
+        return jdbcTokenRepositoryImpl;
     }
 }
 
